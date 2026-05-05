@@ -4,13 +4,13 @@
 
 ### From a fresh Ubuntu 24.04 server:
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/your-org/wabizz/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Rangana666/WA_Bizz/main/install.sh)
 ```
 
 ### From a cloned repository:
 ```bash
-git clone https://github.com/your-org/wabizz.git
-cd wabizz
+git clone https://github.com/Rangana666/WA_Bizz.git
+cd WA_Bizz
 sudo ./install.sh
 ```
 

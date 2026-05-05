@@ -5,7 +5,7 @@
 # ║  Single-command setup for the full WhatsApp SaaS platform.                  ║
 # ║                                                                              ║
 # ║  Usage:                                                                      ║
-# ║    bash <(curl -fsSL https://raw.githubusercontent.com/your/repo/main/install.sh)║
+# ║    bash <(curl -fsSL https://raw.githubusercontent.com/Rangana666/WA_Bizz/main/install.sh)║
 # ║    — OR —                                                                    ║
 # ║    ./install.sh                        (from cloned repo)                    ║
 # ║    ./install.sh --mode fleet           (skip mode prompt)                    ║
@@ -143,7 +143,7 @@ ensure_repo() {
     ok "Running from repo: ${REPO_DIR}"
   else
     info "Cloning WA Bizz repository..."
-    ask "Git repository URL" REPO_URL "https://github.com/your-org/wabizz.git"
+    ask "Git repository URL" REPO_URL "https://github.com/Rangana666/WA_Bizz.git"
     git clone "${REPO_URL}" /opt/wabizz-repo
     REPO_DIR="/opt/wabizz-repo"
     ok "Repository cloned to ${REPO_DIR}"
