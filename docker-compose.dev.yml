@@ -1,4 +1,3 @@
-version: "3.9"
 # ─── Local development compose ────────────────────────────────────────────────
 # No SSL. Ports exposed directly. Hot-reload friendly.
 # Usage:  docker compose -f docker-compose.dev.yml up -d

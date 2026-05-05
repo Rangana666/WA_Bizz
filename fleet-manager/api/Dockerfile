@@ -4,7 +4,7 @@ RUN apk add --no-cache dumb-init openssh-client
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 COPY src/ ./src/
 
