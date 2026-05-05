@@ -1,0 +1,13 @@
+{
+  "type": "perfume",
+  "displayName": { "en": "Perfumes & Fragrances", "si": "සුවඳ විලවුන්", "ta": "வாசனை திரவியங்கள்" },
+  "defaultCategories": ["Floral", "Woody", "Fresh", "Oriental", "Citrus", "Unisex"],
+  "defaultColors": [],
+  "defaultSizes": ["30ml", "50ml", "100ml", "150ml", "200ml"],
+  "productDefaults": {
+    "has_colors": false,
+    "has_sizes": true
+  },
+  "sizeLabel": { "en": "Choose size (ml)", "si": "ප්‍රමාණය තෝරන්න (ml)", "ta": "அளவு தேர்ந்தெடுக்கவும் (ml)" },
+  "colorLabel": { "en": "Choose variant", "si": "ප්‍රභේදය තෝරන්න", "ta": "வகை தேர்ந்தெடுக்கவும்" }
+}

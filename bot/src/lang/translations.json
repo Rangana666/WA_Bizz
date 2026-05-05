@@ -1,0 +1,204 @@
+{
+  "welcome": {
+    "en": "👋 Welcome to *{businessName}*!\n\nHow can we help you today?",
+    "si": "👋 *{businessName}* වෙත සාදරයෙන් පිළිගනිමු!\n\nඅද ඔබට කෙසේ උදව් කළ හැකිද?",
+    "ta": "👋 *{businessName}* க்கு வரவேற்கிறோம்!\n\nஇன்று நாங்கள் உங்களுக்கு எவ்வாறு உதவலாம்?"
+  },
+  "main_menu_browse": {
+    "en": "🛍 Browse products",
+    "si": "🛍 නිෂ්පාදන බලන්න",
+    "ta": "🛍 பொருட்களை உலாவுக"
+  },
+  "main_menu_orders": {
+    "en": "📦 My orders",
+    "si": "📦 මගේ ඇණවුම්",
+    "ta": "📦 என் ஆர்டர்கள்"
+  },
+  "main_menu_contact": {
+    "en": "📞 Contact us",
+    "si": "📞 අපව අමතන්න",
+    "ta": "📞 எங்களை தொடர்புகொள்"
+  },
+  "choose_category": {
+    "en": "Choose a category:",
+    "si": "ප්‍රවර්ගයක් තෝරන්න:",
+    "ta": "ஒரு வகையைத் தேர்ந்தெடுக்கவும்:"
+  },
+  "products_in_category": {
+    "en": "Products in *{category}*:",
+    "si": "*{category}* හි නිෂ්පාදන:",
+    "ta": "*{category}* இல் உள்ள பொருட்கள்:"
+  },
+  "no_products": {
+    "en": "No products available in this category right now.",
+    "si": "මෙම ප්‍රවර්ගයේ දැනට නිෂ්පාදන නොමැත.",
+    "ta": "இந்த வகையில் இப்போது பொருட்கள் இல்லை."
+  },
+  "enter_product_code": {
+    "en": "Reply with a product code (e.g. *SHIRT-001*) to see details:",
+    "si": "විස්තර බැලීමට නිෂ්පාදන කේතයක් (උදා: *SHIRT-001*) ලියන්න:",
+    "ta": "விவரங்களைப் பார்க்க ஒரு பொருள் குறியீட்டை (எ.கா: *SHIRT-001*) அனுப்புங்கள்:"
+  },
+  "product_not_found": {
+    "en": "❌ Product not found. Please check the code and try again.",
+    "si": "❌ නිෂ්පාදනය හමු නොවීය. කේතය පරීක්ෂා කර නැවත උත්සාහ කරන්න.",
+    "ta": "❌ பொருள் கிடைக்கவில்லை. குறியீட்டை சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
+  },
+  "out_of_stock": {
+    "en": "❌ This product is currently out of stock.",
+    "si": "❌ මෙම නිෂ්පාදනය දැනට stock නොමැත.",
+    "ta": "❌ இந்த பொருள் தற்போது கையிருப்பில் இல்லை."
+  },
+  "choose_color": {
+    "en": "🎨 Choose a colour:",
+    "si": "🎨 වර්ණයක් තෝරන්න:",
+    "ta": "🎨 ஒரு நிறத்தைத் தேர்ந்தெடுக்கவும்:"
+  },
+  "choose_size": {
+    "en": "📏 Choose a size:",
+    "si": "📏 ප්‍රමාණයක් තෝරන්න:",
+    "ta": "📏 ஒரு அளவைத் தேர்ந்தெடுக்கவும்:"
+  },
+  "choose_quantity": {
+    "en": "🔢 How many would you like?",
+    "si": "🔢 කෝප්ප කීයක් අවශ්‍යද?",
+    "ta": "🔢 எத்தனை வேண்டும்?"
+  },
+  "enter_quantity": {
+    "en": "Please type the quantity (e.g. *3*):",
+    "si": "ප්‍රමාණය ලියන්න (උදා: *3*):",
+    "ta": "அளவை தட்டச்சு செய்யுங்கள் (எ.கா: *3*):"
+  },
+  "invalid_quantity": {
+    "en": "❌ Please enter a valid number (1-99).",
+    "si": "❌ වලංගු සංඛ්‍යාවක් ඇතුළු කරන්න (1-99).",
+    "ta": "❌ சரியான எண்ணை உள்ளிடவும் (1-99)."
+  },
+  "enter_name": {
+    "en": "👤 What is your name? (Please type it)",
+    "si": "👤 ඔබේ නම කුමක්ද? (ලියා දෙන්න)",
+    "ta": "👤 உங்கள் பெயர் என்ன? (தட்டச்சு செய்யுங்கள்)"
+  },
+  "enter_address": {
+    "en": "📍 What is your delivery address? (Please type your full address)",
+    "si": "📍 ඔබේ බෙදාහැරීමේ ලිපිනය කුමක්ද? (සම්පූර්ණ ලිපිනය ලියන්න)",
+    "ta": "📍 உங்கள் டெலிவரி முகவரி என்ன? (முழு முகவரியை தட்டச்சு செய்யுங்கள்)"
+  },
+  "order_summary": {
+    "en": "✅ *Order Summary*",
+    "si": "✅ *ඇණවුම් සාරාංශය*",
+    "ta": "✅ *ஆர்டர் சுருக்கம்*"
+  },
+  "total": {
+    "en": "Total",
+    "si": "එකතුව",
+    "ta": "மொத்தம்"
+  },
+  "deliver_to": {
+    "en": "Deliver to",
+    "si": "ලිපිනය",
+    "ta": "டெலிவரி முகவரி"
+  },
+  "confirm_order": {
+    "en": "✅ Confirm order",
+    "si": "✅ ඇණවුම තහවුරු කරන්න",
+    "ta": "✅ ஆர்டரை உறுதிப்படுத்துங்கள்"
+  },
+  "cancel_order": {
+    "en": "❌ Cancel",
+    "si": "❌ අවලංගු කරන්න",
+    "ta": "❌ இரத்து செய்"
+  },
+  "order_confirmed": {
+    "en": "🎉 *Order Confirmed!*\n\nYour order *{orderRef}* has been received.\n\nWe will contact you shortly to confirm payment and delivery. Thank you! 🙏",
+    "si": "🎉 *ඇණවුම තහවුරු විය!*\n\nඔබේ ඇණවුම *{orderRef}* ලැබී ඇත.\n\nගෙවීම් සහ බෙදාහැරීම තහවුරු කිරීමට ඉක්මනින් ඔබව සම්බන්ධ කර ගනිමු. ස්තූතියි! 🙏",
+    "ta": "🎉 *ஆர்டர் உறுதிப்படுத்தப்பட்டது!*\n\nஉங்கள் ஆர்டர் *{orderRef}* பெறப்பட்டது.\n\nகட்டணம் மற்றும் டெலிவரியை உறுதிப்படுத்த விரைவில் தொடர்பு கொள்கிறோம். நன்றி! 🙏"
+  },
+  "order_cancelled": {
+    "en": "Order cancelled. Type anything to start again.",
+    "si": "ඇණවුම අවලංගු කරන ලදී. නැවත ආරම්භ කිරීමට ඕනෑම දෙයක් ලියන්න.",
+    "ta": "ஆர்டர் ரத்து செய்யப்பட்டது. மீண்டும் தொடங்க எதையும் தட்டச்சு செய்யுங்கள்."
+  },
+  "choose_payment": {
+    "en": "🧾 *Order {orderRef} placed!*\n\nHow would you like to pay?",
+    "si": "🧾 *ඇණවුම {orderRef} ලැබී ඇත!*\n\nඔබ ගෙවීම් කිරීමට කැමති ආකාරය කුමක්ද?",
+    "ta": "🧾 *ஆர்டர் {orderRef} பெறப்பட்டது!*\n\nநீங்கள் எவ்வாறு பணம் செலுத்த விரும்புகிறீர்கள்?"
+  },
+  "pay_online": {
+    "en": "💳 Pay online (PayHere)",
+    "si": "💳 Online ගෙවීම (PayHere)",
+    "ta": "💳 ஆன்லைன் கட்டணம் (PayHere)"
+  },
+  "pay_bank": {
+    "en": "🏦 Bank transfer",
+    "si": "🏦 බැංකු ගෙවීම",
+    "ta": "🏦 வங்கி பரிமாற்றம்"
+  },
+  "pay_cod": {
+    "en": "💵 Cash on delivery",
+    "si": "💵 බෙදාහැරීමේදී ගෙවීම",
+    "ta": "💵 டெலிவரியில் பணம்"
+  },
+  "payment_link_payhere": {
+    "en": "💳 *Secure payment link for order {orderRef}:*\n\n{link}\n\nThis link will take you to PayHere's secure checkout. You can pay by card, FriMi, eZCash, or internet banking.\n\nYour order will be confirmed once payment is received. 🙏",
+    "si": "💳 *ඇණවුම {orderRef} සඳහා ගෙවීම් සබැඳිය:*\n\n{link}\n\nPayHere ආරක්ෂිත checkout වෙත යයි. කාඩ්, FriMi, eZCash හෝ internet banking ගෙවිය හැකිය.\n\nගෙවීම ලැබූ පසු ඇණවුම තහවුරු වේ. 🙏",
+    "ta": "💳 *ஆர்டர் {orderRef} க்கான கட்டண இணைப்பு:*\n\n{link}\n\nPayHere பாதுகாப்பான checkout க்கு செல்கிறது. கார்டு, FriMi, eZCash அல்லது இணைய வங்கி மூலம் கட்டணம் செலுத்தலாம்.\n\nகட்டணம் பெறப்பட்டதும் ஆர்டர் உறுதிப்படுத்தப்படும். 🙏"
+  },
+  "payment_bank_details": {
+    "en": "🏦 *Bank Transfer Details for order {orderRef}:*\n\nBank: Commercial Bank\nAccount Name: WA Bizz\nAccount No: 8001234567\nBranch: Colombo\n\nPlease use *{orderRef}* as the payment reference and send us a screenshot of the transfer receipt. Your order will be confirmed once we verify the payment. 🙏",
+    "si": "🏦 *ඇණවුම {orderRef} සඳහා බැංකු ගෙවීම් විස්තර:*\n\nබැංකුව: Commercial Bank\nගිණුම් නම: WA Bizz\nගිණුම් අංකය: 8001234567\nශාඛාව: Colombo\n\n*{orderRef}* ගෙවීම් reference ලෙස භාවිතා කරන්න. රිසිට් screenshot එකක් යවන්න. 🙏",
+    "ta": "🏦 *ஆர்டர் {orderRef} க்கான வங்கி விவரங்கள்:*\n\nவங்கி: Commercial Bank\nகணக்கு பெயர்: WA Bizz\nகணக்கு எண்: 8001234567\nகிளை: Colombo\n\n*{orderRef}* கட்டண குறிப்பாக பயன்படுத்தவும். ரசீது screenshot அனுப்பவும். 🙏"
+  },
+  "payment_cod_confirmed": {
+    "en": "✅ *Order {orderRef} confirmed — Cash on Delivery!*\n\nYour order will be delivered to your address. Please have *Rs {amount}* ready when the rider arrives. Thank you! 🙏",
+    "si": "✅ *ඇණවුම {orderRef} තහවුරු විය — Cash on Delivery!*\n\nඔබේ ලිපිනයට බෙදා හරිනු ලැබේ. රයිඩර් පැමිණෙන විට *Rs {amount}* සූදානම් කරන්න. ස්තූතියි! 🙏",
+    "ta": "✅ *ஆர்டர் {orderRef} உறுதிப்படுத்தப்பட்டது — Cash on Delivery!*\n\nஉங்கள் முகவரிக்கு டெலிவரி செய்யப்படும். ரைடர் வரும்போது *Rs {amount}* தயாராக வைத்திருங்கள். நன்றி! 🙏"
+  },
+  "payment_confirmed": {
+    "en": "✅ *Payment received for order {orderRef}!*\n\nThank you for your payment. We will prepare your order and dispatch it soon. 🚚",
+    "si": "✅ *ඇණවුම {orderRef} සඳහා ගෙවීම ලැබී ඇත!*\n\nගෙවීමට ස්තූතියි. ඔබේ ඇණවුම ඉක්මනින් යවන්නෙමු. 🚚",
+    "ta": "✅ *ஆர்டர் {orderRef} க்கான கட்டணம் பெறப்பட்டது!*\n\nகட்டணத்திற்கு நன்றி. விரைவில் உங்கள் ஆர்டரை அனுப்புகிறோம். 🚚"
+  },
+  "my_orders_empty": {
+    "en": "📦 You have no orders yet. Type anything to browse our products!",
+    "si": "📦 ඔබට තවම ඇණවුම් නොමැත. නිෂ්පාදන බැලීමට ඕනෑම දෙයක් ලියන්න!",
+    "ta": "📦 உங்களுக்கு இன்னும் ஆர்டர்கள் இல்லை. எங்கள் பொருட்களை உலாவ எதையும் தட்டச்சு செய்யுங்கள்!"
+  },
+  "my_orders_list": {
+    "en": "📦 *Your Orders*",
+    "si": "📦 *ඔබේ ඇණවුම්*",
+    "ta": "📦 *உங்கள் ஆர்டர்கள்*"
+  },
+  "status_new": { "en": "Received", "si": "ලැබුණි", "ta": "பெறப்பட்டது" },
+  "status_confirmed": { "en": "Confirmed", "si": "තහවුරු", "ta": "உறுதிப்படுத்தப்பட்டது" },
+  "status_payment_pending": { "en": "Payment pending", "si": "ගෙවීම් අපේක්ෂිත", "ta": "கட்டணம் நிலுவையில்" },
+  "status_paid": { "en": "Paid", "si": "ගෙවා ඇත", "ta": "பணம் செலுத்தப்பட்டது" },
+  "status_dispatched": { "en": "On the way 🚚", "si": "යවා ඇත 🚚", "ta": "வழியில் 🚚" },
+  "status_delivered": { "en": "Delivered ✅", "si": "ලැබී ඇත ✅", "ta": "டெலிவரி ✅" },
+  "status_cancelled": { "en": "Cancelled", "si": "අවලංගු", "ta": "ரத்து" },
+  "bot_inactive": {
+    "en": "This store is temporarily unavailable. Please contact the seller directly.",
+    "si": "මෙම හාල් ශාලාව තාවකාලිකව නොලැබේ. කෙලින්ම අලෙවිකරු සම්බන්ධ කරන්න.",
+    "ta": "இந்தக் கடை தற்காலிகமாக கிடைக்கவில்லை. நேரடியாக விற்பனையாளரை தொடர்பு கொள்ளுங்கள்."
+  },
+  "back": { "en": "⬅ Back", "si": "⬅ ආපසු", "ta": "⬅ பின்" },
+  "other_qty": { "en": "Other amount", "si": "වෙනත් ප්‍රමාණය", "ta": "வேறு அளவு" },
+  "contact_info": {
+    "en": "📞 *Contact Us*\n\n*{businessName}*\nOwner: {ownerName}\nWhatsApp: {ownerPhone}\n\nFeel free to message us directly for any questions! 🙏",
+    "si": "📞 *අපව අමතන්න*\n\n*{businessName}*\nඅයිතිකරු: {ownerName}\nWhatsApp: {ownerPhone}\n\nඕනෑම ප්‍රශ්නයකට කෙලින්ම message කරන්න! 🙏",
+    "ta": "📞 *எங்களை தொடர்புகொள்*\n\n*{businessName}*\nஉரிமையாளர்: {ownerName}\nWhatsApp: {ownerPhone}\n\nஎந்த கேள்விகளுக்கும் நேரடியாக message செய்யுங்கள்! 🙏"
+  },
+  "rider_assigned": {
+    "en": "🚚 *Your order is on its way!*\n\nOrder: *{orderRef}*\nRider: {riderName}\nRider's phone: {riderPhone}\n\nExpected delivery: Today. Thank you for your patience! 🙏",
+    "si": "🚚 *ඔබේ ඇණවුම මාර්ගයේ!*\n\nඇණවුම: *{orderRef}*\nරයිඩර්: {riderName}\nදුරකථනය: {riderPhone}\n\nඅද ලැබෙනු ඇත. ස්තූතියි! 🙏",
+    "ta": "🚚 *உங்கள் ஆர்டர் வழியில் உள்ளது!*\n\nஆர்டர்: *{orderRef}*\nரைடர்: {riderName}\nதொலைபேசி: {riderPhone}\n\nஇன்று டெலிவரி எதிர்பார்க்கப்படுகிறது. நன்றி! 🙏"
+  },
+  "rider_notification": {
+    "en": "📦 *New Delivery Assignment*\n\nHi {riderName}! You have a new delivery.\n\nOrder: *{orderRef}*\nCustomer: {customerName}\nAddress: {address}\nAmount to collect: *Rs {amount}* (COD)\n\nPlease confirm when you pick up the package. 🙏"
+  },
+  "broadcast_message_footer": {
+    "en": "\n\n_Reply with any message to browse our products._",
+    "si": "\n\n_ඕනෑම message එකක් ලියා නිෂ්පාදන බලන්න._",
+    "ta": "\n\n_எங்கள் பொருட்களை உலாவ எதையும் பதிலளிக்கவும்._"
+  }
+}

@@ -1,0 +1,102 @@
+name: Build & Push Bot Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bot/**'
+      - 'dashboard/**'
+      - 'docker-compose.yml'
+      - '.gitea/workflows/build.yml'
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY_URL }}        # e.g. registry.wabizz.lk
+  IMAGE_BOT: ${{ secrets.REGISTRY_URL }}/wabizz/bot
+  IMAGE_DASH: ${{ secrets.REGISTRY_URL }}/wabizz/dashboard
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: bot/package-lock.json
+
+      - name: Install bot dependencies
+        working-directory: bot
+        run: npm ci
+
+      - name: Lint check
+        working-directory: bot
+        run: node --check src/index.js src/bot/router.js src/db/postgres.js
+
+  build-and-push:
+    name: Build Docker images
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: sha
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Log in to private registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push bot image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./bot
+          push: true
+          tags: |
+            ${{ env.IMAGE_BOT }}:latest
+            ${{ env.IMAGE_BOT }}:${{ steps.sha.outputs.SHORT_SHA }}
+          cache-from: type=registry,ref=${{ env.IMAGE_BOT }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_BOT }}:buildcache,mode=max
+
+      - name: Build & push dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dashboard
+          push: true
+          tags: |
+            ${{ env.IMAGE_DASH }}:latest
+            ${{ env.IMAGE_DASH }}:${{ steps.sha.outputs.SHORT_SHA }}
+          cache-from: type=registry,ref=${{ env.IMAGE_DASH }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_DASH }}:buildcache,mode=max
+
+      - name: Notify Fleet Manager of new version
+        env:
+          FLEET_URL: ${{ secrets.FLEET_MANAGER_URL }}
+          FLEET_TOKEN: ${{ secrets.FLEET_MANAGER_TOKEN }}
+          VERSION: ${{ steps.sha.outputs.SHORT_SHA }}
+        run: |
+          curl -s -X POST "${FLEET_URL}/admin/registry/notify" \
+            -H "Authorization: Bearer ${FLEET_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"version\":\"${VERSION}\",\"buildRef\":\"${GITHUB_SHA}\"}"
+
+      - name: Send Telegram notification
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ steps.sha.outputs.SHORT_SHA }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${CHAT_ID}" \
+            -d "text=🏗 New build ready: v${VERSION} — ready to push to fleet"

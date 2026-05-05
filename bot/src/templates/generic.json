@@ -1,0 +1,13 @@
+{
+  "type": "other",
+  "displayName": { "en": "General Store", "si": "සාමාන්‍ය වෙළඳසැල", "ta": "பொது கடை" },
+  "defaultCategories": ["Category 1", "Category 2", "Category 3"],
+  "defaultColors": [],
+  "defaultSizes": [],
+  "productDefaults": {
+    "has_colors": false,
+    "has_sizes": false
+  },
+  "sizeLabel": { "en": "Choose option", "si": "විකල්පය තෝරන්න", "ta": "விருப்பம் தேர்ந்தெடுக்கவும்" },
+  "colorLabel": { "en": "Choose variant", "si": "ප්‍රභේදය තෝරන්න", "ta": "வகை தேர்ந்தெடுக்கவும்" }
+}

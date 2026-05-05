@@ -1,0 +1,13 @@
+{
+  "type": "clothing",
+  "displayName": { "en": "Clothing & Fashion", "si": "ඇඳුම් සහ විලාසිතා", "ta": "ஆடை மற்றும் நாகரிகம்" },
+  "defaultCategories": ["Sarees", "Dresses", "Tops & Blouses", "Kurtas", "Trousers", "Accessories"],
+  "defaultColors": ["Red", "Blue", "Black", "White", "Green", "Pink", "Yellow", "Maroon", "Navy", "Grey"],
+  "defaultSizes": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+  "productDefaults": {
+    "has_colors": true,
+    "has_sizes": true
+  },
+  "sizeLabel": { "en": "Choose size", "si": "ප්‍රමාණය තෝරන්න", "ta": "அளவு தேர்ந்தெடுக்கவும்" },
+  "colorLabel": { "en": "Choose colour", "si": "වර්ණය තෝරන්න", "ta": "நிறம் தேர்ந்தெடுக்கவும்" }
+}

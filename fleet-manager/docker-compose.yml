@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  api:
+    build: ./api
+    container_name: fleet-api
+    restart: always
+    ports:
+      - "127.0.0.1:5000:5000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ~/.ssh:/root/.ssh:ro    # Fleet Manager's SSH key for VPS access
+
+  ui:
+    build: ./ui
+    container_name: fleet-ui
+    restart: always
+    ports:
+      - "127.0.0.1:5001:3000"
+    environment:
+      - VITE_API_URL=/admin
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: fleet-postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - fleet_postgres_data:/var/lib/postgresql/data
+      - ./api/src/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  fleet_postgres_data:

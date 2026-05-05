@@ -1,0 +1,15 @@
+{
+  "type": "food",
+  "displayName": { "en": "Food & Beverages", "si": "ආහාර සහ පාන", "ta": "உணவு மற்றும் பானங்கள்" },
+  "defaultCategories": ["Rice Meals", "Short Eats", "Desserts", "Drinks", "Bakery", "Specials"],
+  "defaultColors": [],
+  "defaultSizes": ["Small", "Regular", "Large", "Family Pack"],
+  "productDefaults": {
+    "has_colors": false,
+    "has_sizes": false
+  },
+  "sizeLabel": { "en": "Choose portion", "si": "ප්‍රමාණය තෝරන්න", "ta": "அளவு தேர்ந்தெடுக்கவும்" },
+  "colorLabel": { "en": "Choose variant", "si": "ප්‍රභේදය තෝරන්න", "ta": "வகை தேர்ந்தெடுக்கவும்" },
+  "dailyAvailability": true,
+  "orderCutoffTime": "20:00"
+}
