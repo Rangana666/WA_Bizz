@@ -1,10 +1,11 @@
 FROM node:20-alpine
 
-RUN apk add --no-cache dumb-init openssh-client
+# python3 make g++ are required to compile native modules (node-ssh → ssh2 → cpu-features)
+RUN apk add --no-cache dumb-init openssh-client python3 make g++
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install --omit=dev --no-audit --no-fund
 
 COPY src/ ./src/
 
