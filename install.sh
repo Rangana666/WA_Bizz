@@ -681,21 +681,19 @@ ENV
   fi
 
   step "Starting bot stack (bot + dashboard + postgres + redis + evolution)"
+  info "Building bot image — this takes 2-3 minutes on first run..."
   cd "${INSTALL_DIR}"
   docker compose -f docker-compose.dev.yml up -d --build
   ok "Bot stack started"
 
-  step "Starting Fleet Manager stack"
-  cd "${INSTALL_DIR}/fleet-manager"
-  docker compose up -d
-  ok "Fleet Manager started"
-
   step "Verifying services"
   wait_healthy "http://localhost:4000/health" "Bot API"
-  wait_healthy "http://localhost:5000/health" "Fleet Manager API"
 
   print_dev_summary
 }
+# Fleet Manager is intentionally skipped in dev mode — it takes too long to build
+# and is not needed to test the WhatsApp bot. Start it manually later with:
+#   cd fleet-manager && docker compose up -d
 
 print_dev_summary() {
   local bar; bar=$(printf '━%.0s' {1..62})
@@ -704,24 +702,26 @@ print_dev_summary() {
   echo -e "${GREEN}${BOLD}  🛠  Development Environment Ready!${NC}"
   echo -e "${GREEN}${bar}${NC}"
   echo
-  echo -e "  ${BOLD}Bot API:${NC}          http://localhost:4000/health"
   echo -e "  ${BOLD}Dashboard:${NC}        http://localhost:3000"
-  echo -e "  ${BOLD}Dashboard login:${NC}  dev@wabizz.lk / dev123456"
-  echo -e "  ${BOLD}Fleet Manager:${NC}    http://localhost:5000/health"
-  echo -e "  ${BOLD}Fleet Admin:${NC}      http://localhost:5001"
-  echo -e "  ${BOLD}Fleet login:${NC}      admin@wabizz.lk / admin123456"
-  echo -e "  ${BOLD}PostgreSQL:${NC}       localhost:5432 (check .env for password)"
+  echo -e "  ${BOLD}Login:${NC}            dev@wabizz.lk  /  dev123456"
+  echo -e "  ${BOLD}Bot API:${NC}          http://localhost:4000/health"
+  echo -e "  ${BOLD}PostgreSQL:${NC}       localhost:5432"
   echo -e "  ${BOLD}Redis:${NC}            localhost:6379"
+  echo -e "  ${BOLD}Evolution API:${NC}    http://localhost:8080"
   echo
-  echo -e "  ${CYAN}Quick commands (from repo root):${NC}"
-  echo -e "  make logs         — Follow all container logs"
-  echo -e "  make bot-shell    — Shell inside bot container"
-  echo -e "  make db-shell     — psql inside postgres container"
-  echo -e "  make restart-bot  — Restart bot after code changes"
-  echo -e "  make down         — Stop everything"
+  echo -e "  ${CYAN}Next steps:${NC}"
+  echo -e "  1. Open http://localhost:3000  →  log in"
+  echo -e "  2. Settings → Get QR Code → scan with WhatsApp"
+  echo -e "  3. Catalog → add your products"
+  echo -e "  4. Message your WhatsApp number to test the bot"
   echo
-  echo -e "  ${YELLOW}To test the WhatsApp bot:${NC}"
-  echo -e "  Dashboard → Settings → Get QR Code → scan with WhatsApp"
+  echo -e "  ${YELLOW}Useful commands:${NC}"
+  echo -e "  cd ${INSTALL_DIR} && docker compose -f docker-compose.dev.yml logs -f bot"
+  echo -e "  cd ${INSTALL_DIR} && docker compose -f docker-compose.dev.yml restart bot"
+  echo -e "  cd ${INSTALL_DIR} && docker compose -f docker-compose.dev.yml down"
+  echo
+  echo -e "  ${CYAN}Fleet Manager (optional — start manually when needed):${NC}"
+  echo -e "  cd ${INSTALL_DIR}/fleet-manager && docker compose up -d"
   echo
 }
 
