@@ -837,94 +837,66 @@ server.listen(config.bot.port, () => {
   }, 10000);
 });
 
-// ─── Evolution API WebSocket (receives real-time events directly) ─────────────
-// Fallback for when the HTTP global webhook doesn't fire (v1.8.x bug)
-function startEvoWebSocket() {
-  let ws;
+// ─── Evolution API message polling ───────────────────────────────────────────
+// Direct polling fallback when HTTP webhook doesn't fire (Evolution API v1.8.x bug)
+const _processedMsgIds = new Set();
 
-  function connect() {
-    const wsBase = config.evolution.url
-      .replace('https://', 'wss://')
-      .replace('http://', 'ws://');
-
-    const url = `${wsBase}/socket.io/?EIO=4&transport=websocket`;
-
-    try {
-      const WebSocket = require('ws');
-      ws = new WebSocket(url, {
+async function pollEvolutionMessages() {
+  try {
+    const axios = require('axios');
+    const resp = await axios.get(
+      `${config.evolution.url}/message/findMessages/${config.evolution.instance}`,
+      {
         headers: { apikey: config.evolution.apiKey },
-      });
-    } catch {
-      console.warn('[Evolution WS] ws package unavailable — HTTP webhook only');
-      return;
-    }
-
-    ws.on('open', () => {
-      console.log('[Evolution WS] Connected — subscribing to events');
-      ws.send('40'); // socket.io: join default namespace
-    });
-
-    ws.on('message', async (raw) => {
-      const str = raw.toString();
-      if (str === '2') { ws.send('3'); return; } // heartbeat ping/pong
-
-      if (!str.startsWith('42')) return;
-
-      try {
-        const parsed = JSON.parse(str.slice(2));
-        const event = parsed[0];
-        const payload = parsed[1];
-
-        if (event !== 'messages.upsert') return;
-        if (payload?.instance !== config.evolution.instance) return;
-
-        const msg = payload?.data;
-        if (!msg || msg.key?.fromMe) return;
-
-        const remoteJid = msg.key?.remoteJid || '';
-        if (remoteJid.endsWith('@g.us')) return; // skip group messages
-
-        // Handle both @s.whatsapp.net and @lid formats
-        const phone = remoteJid
-          .replace('@s.whatsapp.net', '')
-          .replace('@lid', '');
-
-        if (!phone) return;
-
-        let messageText = '';
-        if (msg.message?.conversation) {
-          messageText = msg.message.conversation;
-        } else if (msg.message?.extendedTextMessage?.text) {
-          messageText = msg.message.extendedTextMessage.text;
-        } else if (msg.message?.buttonsResponseMessage?.selectedDisplayText) {
-          messageText = msg.message.buttonsResponseMessage.selectedDisplayText;
-        } else if (msg.message?.listResponseMessage?.title) {
-          messageText = msg.message.listResponseMessage.title;
-        }
-
-        if (!messageText?.trim()) return;
-
-        console.log(`[Evolution WS] Message from ${phone}: "${messageText.trim().slice(0, 50)}"`);
-        await routeMessage(phone, messageText.trim());
-      } catch (err) {
-        console.error('[Evolution WS] Processing error:', err.message);
+        params: { count: 10 },
+        timeout: 5000,
       }
-    });
+    );
 
-    ws.on('close', () => {
-      console.log('[Evolution WS] Disconnected — reconnecting in 5s...');
-      setTimeout(connect, 5000);
-    });
+    const rows = Array.isArray(resp.data)
+      ? resp.data
+      : resp.data?.messages || [];
 
-    ws.on('error', (err) => {
-      console.warn('[Evolution WS] Error:', err.message);
-    });
-  }
+    for (const msg of rows) {
+      const id = msg.key?.id;
+      if (!id || _processedMsgIds.has(id)) continue;
+      if (msg.key?.fromMe) continue;
 
-  // Wait for Evolution API to be fully ready before connecting
-  setTimeout(connect, 15000);
+      _processedMsgIds.add(id);
+      if (_processedMsgIds.size > 500) {
+        // Keep set from growing forever
+        const first = _processedMsgIds.values().next().value;
+        _processedMsgIds.delete(first);
+      }
+
+      const remoteJid = msg.key?.remoteJid || '';
+      if (remoteJid.endsWith('@g.us')) continue;
+
+      // Handle @s.whatsapp.net and @lid formats
+      const phone = remoteJid
+        .replace('@s.whatsapp.net', '')
+        .replace('@lid', '');
+      if (!phone || phone.includes('@')) continue;
+
+      const text =
+        msg.message?.conversation ||
+        msg.message?.extendedTextMessage?.text ||
+        msg.message?.buttonsResponseMessage?.selectedDisplayText ||
+        msg.message?.listResponseMessage?.title || '';
+
+      if (!text.trim()) continue;
+
+      console.log(`[Poll] New message from ${phone}: "${text.trim().slice(0, 50)}"`);
+      await routeMessage(phone, text.trim()).catch(console.error);
+    }
+  } catch { /* endpoint might not exist in this version */ }
 }
 
-startEvoWebSocket();
+// Start polling after 20 seconds (let Evolution API fully start first)
+setTimeout(() => {
+  console.log('[Poll] Starting message polling every 3 seconds...');
+  pollEvolutionMessages(); // run once immediately
+  setInterval(pollEvolutionMessages, 3000);
+}, 20000);
 
 module.exports = { app, server };
