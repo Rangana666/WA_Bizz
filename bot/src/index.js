@@ -769,41 +769,46 @@ server.listen(config.bot.port, () => {
     backupService.scheduleDailyBackup();
   }
 
-  // Auto-create Evolution API instance after 10 seconds (wait for evo to start)
+  // Auto-setup Evolution API instance after 10 seconds (wait for evo to start)
   setTimeout(async () => {
+    const axios = require('axios');
+    const evoHeaders = { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' };
+
     try {
-      const axios = require('axios');
-      // Check if instance exists already
+      // Check if instance exists
       await axios.get(
         `${config.evolution.url}/instance/connectionState/${config.evolution.instance}`,
-        { headers: { apikey: config.evolution.apiKey }, timeout: 5000 }
+        { headers: evoHeaders, timeout: 5000 }
       );
-      console.log(`[Evolution] Instance "${config.evolution.instance}" already exists`);
+      console.log(`[Evolution] Instance "${config.evolution.instance}" exists`);
     } catch {
       // Instance doesn't exist — create it
       try {
-        const axios = require('axios');
         await axios.post(
           `${config.evolution.url}/instance/create`,
           { instanceName: config.evolution.instance, qrcode: true },
-          { headers: { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' }, timeout: 10000 }
+          { headers: evoHeaders, timeout: 10000 }
         );
         console.log(`[Evolution] Instance "${config.evolution.instance}" created`);
-
-        // Set webhook for this instance
-        await axios.put(
-          `${config.evolution.url}/webhook/set/${config.evolution.instance}`,
-          {
-            url: `http://bot:4000/webhook`,
-            webhook_by_events: false,
-            events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
-          },
-          { headers: { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' }, timeout: 5000 }
-        ).catch((e) => console.warn('[Evolution] Webhook set failed:', e.message));
-        console.log(`[Evolution] Webhook configured for "${config.evolution.instance}"`);
       } catch (err) {
         console.warn(`[Evolution] Could not create instance: ${err.message}`);
       }
+    }
+
+    // Always set webhook — whether instance was just created or already existed
+    try {
+      await axios.put(
+        `${config.evolution.url}/webhook/set/${config.evolution.instance}`,
+        {
+          url: 'http://bot:4000/webhook',
+          webhook_by_events: false,
+          events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
+        },
+        { headers: evoHeaders, timeout: 5000 }
+      );
+      console.log(`[Evolution] Webhook set for "${config.evolution.instance}" → http://bot:4000/webhook`);
+    } catch (err) {
+      console.warn(`[Evolution] Webhook setup failed: ${err.message}`);
     }
   }, 10000);
 });
