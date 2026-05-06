@@ -723,6 +723,36 @@ server.listen(config.bot.port, () => {
   if (process.env.HOS_ACCESS_KEY) {
     backupService.scheduleDailyBackup();
   }
+
+  // Auto-create Evolution API instance after 10 seconds (wait for evo to start)
+  setTimeout(async () => {
+    try {
+      const axios = require('axios');
+      // Check if instance exists already
+      await axios.get(
+        `${config.evolution.url}/instance/connectionState/${config.evolution.instance}`,
+        { headers: { apikey: config.evolution.apiKey }, timeout: 5000 }
+      );
+      console.log(`[Evolution] Instance "${config.evolution.instance}" already exists`);
+    } catch {
+      // Instance doesn't exist — create it
+      try {
+        const axios = require('axios');
+        await axios.post(
+          `${config.evolution.url}/instance/create`,
+          {
+            instanceName: config.evolution.instance,
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS',
+          },
+          { headers: { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' }, timeout: 10000 }
+        );
+        console.log(`[Evolution] Instance "${config.evolution.instance}" created`);
+      } catch (err) {
+        console.warn(`[Evolution] Could not create instance: ${err.message}`);
+      }
+    }
+  }, 10000);
 });
 
 module.exports = { app, server };
