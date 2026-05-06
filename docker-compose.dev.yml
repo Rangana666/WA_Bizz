@@ -5,7 +5,7 @@
 
 services:
   evolution:
-    image: atendai/evolution-api:v2.2.3
+    image: atendai/evolution-api:v1.8.2
     container_name: evo-dev
     restart: unless-stopped
     ports:

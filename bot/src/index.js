@@ -845,114 +845,72 @@ server.listen(config.bot.port, () => {
   }, 10000);
 });
 
-// ─── Evolution API message polling ───────────────────────────────────────────
-// Direct polling fallback when HTTP webhook doesn't fire (Evolution API v1.8.x bug)
-const _processedMsgIds = new Set();
+// ─── Chat-based polling (uses GET /chat/findChats which works in v1.8.x) ─────
+// Tracks last-seen timestamp per JID to detect new incoming messages
+const _chatLastSeen = new Map();
+let _pollInitialized = false;
 
-async function pollEvolutionMessages() {
+async function pollViaChats() {
   try {
     const axios = require('axios');
     const resp = await axios.get(
-      `${config.evolution.url}/message/findMessages/${config.evolution.instance}`,
-      {
-        headers: { apikey: config.evolution.apiKey },
-        params: { count: 10 },
-        timeout: 5000,
-      }
+      `${config.evolution.url}/chat/findChats/${config.evolution.instance}`,
+      { headers: { apikey: config.evolution.apiKey }, timeout: 8000 }
     );
 
-    const rows = Array.isArray(resp.data)
-      ? resp.data
-      : resp.data?.messages || [];
+    const chats = Array.isArray(resp.data) ? resp.data : [];
 
-    for (const msg of rows) {
-      const id = msg.key?.id;
-      if (!id || _processedMsgIds.has(id)) continue;
-      if (msg.key?.fromMe) continue;
+    for (const chat of chats) {
+      const jid = chat.id?._serialized || chat.id || '';
+      if (!jid || jid.includes('@g.us') || jid.includes('@broadcast')) continue;
 
-      _processedMsgIds.add(id);
-      if (_processedMsgIds.size > 500) {
-        // Keep set from growing forever
-        const first = _processedMsgIds.values().next().value;
-        _processedMsgIds.delete(first);
+      // Get last message from this chat
+      const lastMsg = chat.lastMessage || chat.messages?.[chat.messages.length - 1];
+      if (!lastMsg) continue;
+
+      const fromMe = lastMsg.key?.fromMe ?? lastMsg.fromMe ?? false;
+      if (fromMe) continue;
+
+      const ts = lastMsg.messageTimestamp || lastMsg.t || lastMsg.timestamp || 0;
+      const lastSeen = _chatLastSeen.get(jid) || 0;
+
+      // On first poll, just record timestamps — don't process old messages
+      if (!_pollInitialized) {
+        _chatLastSeen.set(jid, ts);
+        continue;
       }
 
-      const remoteJid = msg.key?.remoteJid || '';
-      if (remoteJid.endsWith('@g.us')) continue;
+      if (ts <= lastSeen) continue;
+      _chatLastSeen.set(jid, ts);
 
-      // Handle @s.whatsapp.net and @lid formats
-      const phone = remoteJid
-        .replace('@s.whatsapp.net', '')
-        .replace('@lid', '');
+      const phone = jid.replace('@s.whatsapp.net', '').replace('@lid', '');
       if (!phone || phone.includes('@')) continue;
 
       const text =
-        msg.message?.conversation ||
-        msg.message?.extendedTextMessage?.text ||
-        msg.message?.buttonsResponseMessage?.selectedDisplayText ||
-        msg.message?.listResponseMessage?.title || '';
+        lastMsg.body ||
+        lastMsg.message?.conversation ||
+        lastMsg.message?.extendedTextMessage?.text ||
+        lastMsg.message?.buttonsResponseMessage?.selectedDisplayText ||
+        lastMsg.message?.listResponseMessage?.title || '';
 
       if (!text.trim()) continue;
 
-      console.log(`[Poll] New message from ${phone}: "${text.trim().slice(0, 50)}"`);
+      console.log(`[Chat Poll] New message from ${phone}: "${text.trim().slice(0, 60)}"`);
       await routeMessage(phone, text.trim()).catch(console.error);
     }
-  } catch { /* endpoint might not exist in this version */ }
+
+    if (!_pollInitialized) {
+      _pollInitialized = true;
+      console.log(`[Chat Poll] Initialized — tracking ${chats.length} chats`);
+    }
+  } catch { /* endpoint might not exist */ }
 }
 
-// ─── Evolution API WebSocket (with apikey in URL) ─────────────────────────────
-function startEvoWebSocket() {
-  let ws;
-  function connect() {
-    const wsBase = config.evolution.url
-      .replace('https://', 'wss://')
-      .replace('http://', 'ws://');
-    // Include apikey as query param — required for auth in some v1.8.x builds
-    const url = `${wsBase}/socket.io/?EIO=4&transport=websocket&apikey=${config.evolution.apiKey}`;
-    try {
-      const WebSocket = require('ws');
-      ws = new WebSocket(url);
-    } catch { return; }
-
-    ws.on('open', () => {
-      console.log('[Evolution WS] Connected');
-      ws.send('40');
-    });
-    ws.on('message', async (raw) => {
-      const str = raw.toString();
-      if (str === '2') { ws.send('3'); return; }
-      if (!str.startsWith('42')) return;
-      try {
-        const [event, payload] = JSON.parse(str.slice(2));
-        if (event !== 'messages.upsert') return;
-        if (payload?.instance !== config.evolution.instance) return;
-        const msg = payload?.data;
-        if (!msg || msg.key?.fromMe) return;
-        const remoteJid = msg.key?.remoteJid || '';
-        if (remoteJid.endsWith('@g.us')) return;
-        const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@lid', '');
-        if (!phone || phone.includes('@')) return;
-        const text = msg.message?.conversation ||
-          msg.message?.extendedTextMessage?.text ||
-          msg.message?.buttonsResponseMessage?.selectedDisplayText ||
-          msg.message?.listResponseMessage?.title || '';
-        if (!text.trim()) return;
-        console.log(`[Evolution WS] Message from ${phone}: "${text.slice(0, 50)}"`);
-        await routeMessage(phone, text.trim());
-      } catch (err) { console.error('[Evolution WS]', err.message); }
-    });
-    ws.on('close', () => { setTimeout(connect, 5000); });
-    ws.on('error', () => { /* retry silently */ });
-  }
-  setTimeout(connect, 20000);
-}
-startEvoWebSocket();
-
-// Start polling after 20 seconds (let Evolution API fully start first)
+// Start polling 25 seconds after boot (let Evolution API connect first)
 setTimeout(() => {
-  console.log('[Poll] Starting message polling every 3 seconds...');
-  pollEvolutionMessages(); // run once immediately
-  setInterval(pollEvolutionMessages, 3000);
-}, 20000);
+  console.log('[Chat Poll] Starting chat-based message polling every 3 seconds...');
+  pollViaChats();
+  setInterval(pollViaChats, 3000);
+}, 25000);
 
 module.exports = { app, server };
