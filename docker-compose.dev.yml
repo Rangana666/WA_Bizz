@@ -5,7 +5,7 @@
 
 services:
   evolution:
-    image: atendai/evolution-api:latest
+    image: atendai/evolution-api:v2.2.3
     container_name: evo-dev
     restart: unless-stopped
     ports:
@@ -14,24 +14,14 @@ services:
       - SERVER_URL=http://localhost:8080
       - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
       - AUTHENTICATION_TYPE=apikey
-      - DATABASE_ENABLED=true
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      - DATABASE_CONNECTION_CLIENT_NAME=evolution
-      - DATABASE_SAVE_DATA_INSTANCE=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-      - DATABASE_SAVE_DATA_CONTACTS=true
-      - DATABASE_SAVE_DATA_CHATS=true
-      - REDIS_ENABLED=true
-      - REDIS_URI=redis://:${REDIS_PASSWORD}@redis:6379
+      - DATABASE_ENABLED=false
+      - REDIS_ENABLED=false
       - WEBHOOK_GLOBAL_ENABLED=true
       - WEBHOOK_GLOBAL_URL=http://bot:4000/webhook
-      - LOG_LEVEL=WARN
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=false
+      - DEL_INSTANCE=false
+      - LOG_LEVEL=ERROR
+      - LOG_COLOR=false
     volumes:
       - evo_dev_data:/evolution/instances
 
@@ -63,14 +53,13 @@ services:
     restart: unless-stopped
     working_dir: /app
     ports:
-      - "3000:5173"   # Vite dev server → localhost:3000
+      - "3000:5173"
     volumes:
       - ./dashboard:/app
-      - /app/node_modules
+      - dash_node_modules:/app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:4000
-      - VITE_WS_URL=ws://localhost:4000
-    command: sh -c "npm install --silent && npm run dev -- --host 0.0.0.0"
+      - VITE_API_PROXY_TARGET=http://bot:4000
+    command: sh -c "npm install --no-audit --no-fund --silent && npm run dev -- --host 0.0.0.0"
     depends_on:
       - bot
 
@@ -114,3 +103,4 @@ volumes:
   redis_dev_data:
   evo_dev_data:
   uploads_dev:
+  dash_node_modules:
