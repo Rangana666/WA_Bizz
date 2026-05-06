@@ -727,7 +727,7 @@ app.get('/api/whatsapp/qr', authMiddleware, async (req, res) => {
 
     const createResp = await axios.post(
       `${baseUrl}/instance/create`,
-      { instanceName: instance, qrcode: true },
+      { instanceName: instance, qrcode: true, integration: 'WHATSAPP-BAILEYS' },
       { headers, timeout: 15000 }
     );
 
@@ -792,7 +792,7 @@ server.listen(config.bot.port, () => {
       try {
         await axios.post(
           `${config.evolution.url}/instance/create`,
-          { instanceName: config.evolution.instance, qrcode: true },
+          { instanceName: config.evolution.instance, qrcode: true, integration: 'WHATSAPP-BAILEYS' },
           { headers: evoHeaders, timeout: 10000 }
         );
         console.log(`[Evolution] Instance "${config.evolution.instance}" created`);
