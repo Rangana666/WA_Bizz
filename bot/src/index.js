@@ -68,9 +68,14 @@ app.post('/webhook', async (req, res) => {
 
   try {
     const body = req.body;
-    const event = body.event;
+    const rawEvent = body.event || body.type || '';
 
-    if (event !== 'messages.upsert') return;
+    // Log every webhook event so we can see what's coming in
+    console.log(`[Webhook] Received event: "${rawEvent}" instance: "${body.instance || ''}"`);
+
+    // Handle both formats: messages.upsert and MESSAGES_UPSERT
+    const event = rawEvent.toLowerCase().replace(/[._]/g, '_');
+    if (event !== 'messages_upsert') return;
 
     const msg = body.data;
     if (!msg || msg.key?.fromMe) return;
@@ -795,20 +800,37 @@ server.listen(config.bot.port, () => {
       }
     }
 
-    // Always set webhook — whether instance was just created or already existed
-    try {
-      await axios.put(
-        `${config.evolution.url}/webhook/set/${config.evolution.instance}`,
-        {
-          url: 'http://bot:4000/webhook',
-          webhook_by_events: false,
-          events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
-        },
-        { headers: evoHeaders, timeout: 5000 }
-      );
-      console.log(`[Evolution] Webhook set for "${config.evolution.instance}" → http://bot:4000/webhook`);
-    } catch (err) {
-      console.warn(`[Evolution] Webhook setup failed: ${err.message}`);
+    // Always set webhook — try multiple endpoint patterns for different Evolution API versions
+    const webhookBody = {
+      url: 'http://bot:4000/webhook',
+      webhook_by_events: false,
+      enabled: true,
+      events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
+    };
+    const webhookPaths = [
+      `/webhook/set/${instance}`,
+      `/${instance}/webhook/set`,
+      `/${instance}/webhook`,
+      `/webhook/set`,
+    ];
+    let webhookSet = false;
+    for (const path of webhookPaths) {
+      try {
+        await axios.put(`${baseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
+        console.log(`[Evolution] Webhook set via PUT ${path}`);
+        webhookSet = true;
+        break;
+      } catch {
+        try {
+          await axios.post(`${baseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
+          console.log(`[Evolution] Webhook set via POST ${path}`);
+          webhookSet = true;
+          break;
+        } catch { /* try next */ }
+      }
+    }
+    if (!webhookSet) {
+      console.warn('[Evolution] Could not set webhook via API — relying on WEBHOOK_GLOBAL_ENABLED env var');
     }
   }, 10000);
 });
