@@ -624,6 +624,42 @@ async function sendBroadcast(broadcast) {
   );
 }
 
+// ─── Tracking number (third-party delivery) ───────────────────────────────────
+app.patch('/api/orders/:id/tracking', authMiddleware, async (req, res) => {
+  const { trackingNumber, deliveryCompany } = req.body;
+  if (!trackingNumber) return res.status(400).json({ error: 'Tracking number required' });
+
+  const order = await orderDb.addTracking(req.params.id, trackingNumber, deliveryCompany);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+
+  const { notifyOrderUpdated } = require('./notifications/owner');
+  notifyOrderUpdated(order);
+
+  // Notify customer via WhatsApp
+  if (order.phone) {
+    const { sendText } = require('./bot/messages/send');
+    const { t } = require('./bot/messages/templates');
+    const customerRes = await require('./db/postgres').query(
+      `SELECT lang FROM customers WHERE id = $1`, [order.customer_id]
+    );
+    const lang = customerRes.rows[0]?.lang || 'en';
+    await sendText(order.phone, t('tracking_notification', lang, {
+      orderRef: order.order_ref,
+      deliveryCompany: deliveryCompany || 'Delivery Partner',
+      trackingNumber,
+    })).catch(() => {});
+  }
+
+  res.json(order);
+});
+
+// ─── Monthly stats ────────────────────────────────────────────────────────────
+app.get('/api/analytics/monthly', authMiddleware, async (req, res) => {
+  const { months } = req.query;
+  const data = await orderDb.getMonthlyStats(parseInt(months) || 6);
+  res.json(data);
+});
+
 // ─── Backup (Phase 6) ─────────────────────────────────────────────────────────
 app.post('/api/backup/trigger', authMiddleware, async (req, res) => {
   res.json({ message: 'Backup started' });

@@ -129,4 +129,34 @@ async function updateRider(id, riderName, riderPhone) {
   return res.rows[0] || null;
 }
 
-module.exports = { create, updateStatus, getByCustomer, getAll, getById, getByRef, getTodayStats, updateRider, updatePaymentMethod, markPaid };
+async function addTracking(id, trackingNumber, deliveryCompany) {
+  const res = await db.query(
+    `UPDATE orders
+     SET tracking_number = $1,
+         delivery_company = $2,
+         status = 'dispatched',
+         dispatched_at = NOW(),
+         tracking_notified_at = NOW()
+     WHERE id = $3 RETURNING *`,
+    [trackingNumber, deliveryCompany || null, id]
+  );
+  return res.rows[0] || null;
+}
+
+async function getMonthlyStats(months = 6) {
+  const res = await db.query(
+    `SELECT
+       TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS month,
+       DATE_TRUNC('month', created_at) AS month_date,
+       COUNT(*) AS total_orders,
+       COALESCE(SUM(total_amount), 0) AS total_revenue,
+       COUNT(*) FILTER (WHERE status = 'delivered') AS delivered
+     FROM orders
+     WHERE created_at >= NOW() - INTERVAL '${months} months'
+     GROUP BY DATE_TRUNC('month', created_at)
+     ORDER BY month_date ASC`
+  );
+  return res.rows;
+}
+
+module.exports = { create, updateStatus, getByCustomer, getAll, getById, getByRef, getTodayStats, updateRider, updatePaymentMethod, markPaid, addTracking, getMonthlyStats };

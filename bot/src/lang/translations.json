@@ -196,6 +196,11 @@
   "rider_notification": {
     "en": "📦 *New Delivery Assignment*\n\nHi {riderName}! You have a new delivery.\n\nOrder: *{orderRef}*\nCustomer: {customerName}\nAddress: {address}\nAmount to collect: *Rs {amount}* (COD)\n\nPlease confirm when you pick up the package. 🙏"
   },
+  "tracking_notification": {
+    "en": "📦 *Your order {orderRef} has been dispatched!*\n\nDelivery company: *{deliveryCompany}*\nTracking number: *{trackingNumber}*\n\nYou can use this tracking number to follow your parcel. Thank you for shopping with us! 🙏",
+    "si": "📦 *ඔබේ ඇණවුම {orderRef} යවා ඇත!*\n\nබෙදාහැරීමේ සමාගම: *{deliveryCompany}*\nTracking අංකය: *{trackingNumber}*\n\nඔබේ පාර්සලය track කිරීමට මෙම අංකය භාවිතා කරන්න. ස්තූතියි! 🙏",
+    "ta": "📦 *உங்கள் ஆர்டர் {orderRef} அனுப்பப்பட்டது!*\n\nடெலிவரி நிறுவனம்: *{deliveryCompany}*\nட்ராக்கிங் எண்: *{trackingNumber}*\n\nஉங்கள் பொட்டலத்தை கண்காணிக்க இந்த எண்ணை பயன்படுத்துங்கள். நன்றி! 🙏"
+  },
   "broadcast_message_footer": {
     "en": "\n\n_Reply with any message to browse our products._",
     "si": "\n\n_ඕනෑම message එකක් ලියා නිෂ්පාදන බලන්න._",
