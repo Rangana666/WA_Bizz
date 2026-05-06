@@ -681,15 +681,49 @@ app.get('/api/whatsapp/status', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/whatsapp/qr', authMiddleware, async (req, res) => {
+  const axios = require('axios');
+  const headers = { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' };
+  const baseUrl = config.evolution.url;
+  const instance = config.evolution.instance;
+
   try {
-    const axios = require('axios');
-    const resp = await axios.get(
-      `${config.evolution.url}/instance/connect/${config.evolution.instance}`,
-      { headers: { apikey: config.evolution.apiKey }, timeout: 10000 }
+    // Step 1: try the connect endpoint (works if instance already has QR)
+    const connectResp = await axios.get(
+      `${baseUrl}/instance/connect/${instance}`,
+      { headers, timeout: 10000 }
     );
-    res.json(resp.data);
+    const connectData = connectResp.data;
+    const base64FromConnect = connectData?.base64 ||
+      connectData?.qrcode?.base64 || null;
+
+    if (base64FromConnect && connectData?.count > 0) {
+      return res.json({ base64: base64FromConnect });
+    }
+
+    // Step 2: connect returned count:0 — delete and recreate with qrcode:true
+    await axios.delete(
+      `${baseUrl}/instance/${instance}/deleteInstance`,
+      { headers, timeout: 5000 }
+    ).catch(() => {});
+
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const createResp = await axios.post(
+      `${baseUrl}/instance/create`,
+      { instanceName: instance, qrcode: true },
+      { headers, timeout: 15000 }
+    );
+
+    const base64FromCreate = createResp.data?.qrcode?.base64 || null;
+
+    if (base64FromCreate) {
+      return res.json({ base64: base64FromCreate });
+    }
+
+    res.status(503).json({ error: 'QR code not ready yet — try again in 5 seconds' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to get QR code' });
+    console.error('[WhatsApp QR]', err.message);
+    res.status(500).json({ error: 'Failed to get QR code — check if Evolution API is running' });
   }
 });
 
