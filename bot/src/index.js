@@ -807,10 +807,11 @@ server.listen(config.bot.port, () => {
       enabled: true,
       events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
     };
+    const inst = config.evolution.instance;
     const webhookPaths = [
-      `/webhook/set/${instance}`,
-      `/${instance}/webhook/set`,
-      `/${instance}/webhook`,
+      `/webhook/set/${inst}`,
+      `/${inst}/webhook/set`,
+      `/${inst}/webhook`,
       `/webhook/set`,
     ];
     let webhookSet = false;
