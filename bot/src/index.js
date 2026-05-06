@@ -837,4 +837,94 @@ server.listen(config.bot.port, () => {
   }, 10000);
 });
 
+// ─── Evolution API WebSocket (receives real-time events directly) ─────────────
+// Fallback for when the HTTP global webhook doesn't fire (v1.8.x bug)
+function startEvoWebSocket() {
+  let ws;
+
+  function connect() {
+    const wsBase = config.evolution.url
+      .replace('https://', 'wss://')
+      .replace('http://', 'ws://');
+
+    const url = `${wsBase}/socket.io/?EIO=4&transport=websocket`;
+
+    try {
+      const WebSocket = require('ws');
+      ws = new WebSocket(url, {
+        headers: { apikey: config.evolution.apiKey },
+      });
+    } catch {
+      console.warn('[Evolution WS] ws package unavailable — HTTP webhook only');
+      return;
+    }
+
+    ws.on('open', () => {
+      console.log('[Evolution WS] Connected — subscribing to events');
+      ws.send('40'); // socket.io: join default namespace
+    });
+
+    ws.on('message', async (raw) => {
+      const str = raw.toString();
+      if (str === '2') { ws.send('3'); return; } // heartbeat ping/pong
+
+      if (!str.startsWith('42')) return;
+
+      try {
+        const parsed = JSON.parse(str.slice(2));
+        const event = parsed[0];
+        const payload = parsed[1];
+
+        if (event !== 'messages.upsert') return;
+        if (payload?.instance !== config.evolution.instance) return;
+
+        const msg = payload?.data;
+        if (!msg || msg.key?.fromMe) return;
+
+        const remoteJid = msg.key?.remoteJid || '';
+        if (remoteJid.endsWith('@g.us')) return; // skip group messages
+
+        // Handle both @s.whatsapp.net and @lid formats
+        const phone = remoteJid
+          .replace('@s.whatsapp.net', '')
+          .replace('@lid', '');
+
+        if (!phone) return;
+
+        let messageText = '';
+        if (msg.message?.conversation) {
+          messageText = msg.message.conversation;
+        } else if (msg.message?.extendedTextMessage?.text) {
+          messageText = msg.message.extendedTextMessage.text;
+        } else if (msg.message?.buttonsResponseMessage?.selectedDisplayText) {
+          messageText = msg.message.buttonsResponseMessage.selectedDisplayText;
+        } else if (msg.message?.listResponseMessage?.title) {
+          messageText = msg.message.listResponseMessage.title;
+        }
+
+        if (!messageText?.trim()) return;
+
+        console.log(`[Evolution WS] Message from ${phone}: "${messageText.trim().slice(0, 50)}"`);
+        await routeMessage(phone, messageText.trim());
+      } catch (err) {
+        console.error('[Evolution WS] Processing error:', err.message);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('[Evolution WS] Disconnected — reconnecting in 5s...');
+      setTimeout(connect, 5000);
+    });
+
+    ws.on('error', (err) => {
+      console.warn('[Evolution WS] Error:', err.message);
+    });
+  }
+
+  // Wait for Evolution API to be fully ready before connecting
+  setTimeout(connect, 15000);
+}
+
+startEvoWebSocket();
+
 module.exports = { app, server };
