@@ -676,7 +676,7 @@ app.get('/api/whatsapp/status', authMiddleware, async (req, res) => {
     );
     res.json(resp.data);
   } catch {
-    res.json({ state: 'disconnected' });
+    res.json({ instance: { state: 'close' }, state: 'close' });
   }
 });
 
