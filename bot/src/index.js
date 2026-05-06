@@ -65,13 +65,14 @@ function authMiddleware(req, res, next) {
 // ─── Webhook from Evolution API ───────────────────────────────────────────────
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
+  console.log('[Webhook] POST received — body:', JSON.stringify(req.body || {}).slice(0, 120));
 
   try {
-    const body = req.body;
+    const body = req.body || {};
     const rawEvent = body.event || body.type || '';
 
     // Log every webhook event so we can see what's coming in
-    console.log(`[Webhook] Received event: "${rawEvent}" instance: "${body.instance || ''}"`);
+    console.log(`[Webhook] Event: "${rawEvent}" instance: "${body.instance || ''}"`);
 
     // Handle both formats: messages.upsert and MESSAGES_UPSERT
     const event = rawEvent.toLowerCase().replace(/[._]/g, '_');
@@ -105,7 +106,7 @@ app.post('/webhook', async (req, res) => {
 
     await routeMessage(phone, messageText);
   } catch (err) {
-    console.error('[Webhook] Error processing message:', err.message);
+    console.error('[Webhook] Error:', err.message, err.stack?.split('\n')[1]);
   }
 });
 
