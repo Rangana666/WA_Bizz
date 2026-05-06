@@ -22,26 +22,27 @@ async function sendText(to, text) {
 }
 
 async function sendButtons(to, bodyText, buttons, footerText = '') {
-  // Evolution API v1.x button format (max 3 buttons)
   const btnList = buttons.slice(0, 3);
   try {
+    // Evolution API v1.8.x: buttonText is a plain STRING, needs title field
     await evClient.post(`/message/sendButtons/${INSTANCE}`, {
       number: to,
       buttonMessage: {
-        text: bodyText,
-        footer: footerText,
+        title: 'WA Bizz',
+        description: bodyText,
+        footer: footerText || '',
         buttons: btnList.map((b, i) => ({
           buttonId: String(i + 1),
-          buttonText: { displayText: b },
+          buttonText: String(b),
           type: 1,
         })),
       },
       options: { delay: 1200 },
     });
   } catch {
-    // Fallback: send as plain text if buttons fail
-    const lines = btnList.map((b, i) => `${i + 1}. ${b}`).join('\n');
-    await sendText(to, `${bodyText}\n\n${lines}`);
+    // Fallback: plain numbered text menu
+    const lines = btnList.map((b, i) => `*${i + 1}.* ${b}`).join('\n');
+    await sendText(to, `${bodyText}\n\n${lines}\n\n_Reply with the number to choose_`);
   }
 }
 
@@ -52,18 +53,20 @@ async function sendList(to, title, description, sections) {
       listMessage: {
         title,
         description,
-        buttonText: '📋 View options',
+        buttonText: 'View options',
         footerText: '',
         sections,
       },
       options: { delay: 1200 },
     });
   } catch {
-    // Fallback: send as plain text
-    const lines = sections.flatMap((s) =>
-      s.rows.map((r, i) => `${i + 1}. ${r.title}`)
-    ).join('\n');
-    await sendText(to, `${title}\n\n${lines}\n\nReply with your choice.`);
+    // Fallback: numbered text list
+    let text = title ? `*${title}*\n\n` : '';
+    sections.forEach((s) => {
+      s.rows.forEach((r, i) => { text += `*${i + 1}.* ${r.title}\n`; });
+    });
+    text += '\n_Reply with the number to choose_';
+    await sendText(to, text);
   }
 }
 
