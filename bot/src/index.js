@@ -81,8 +81,11 @@ app.post('/webhook', async (req, res) => {
     const msg = body.data;
     if (!msg || msg.key?.fromMe) return;
 
-    const phone = msg.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
-    if (!phone) return;
+    // Extract phone from any JID format: @s.whatsapp.net, @lid, @g.us
+    const rawJid = msg.key?.remoteJid || '';
+    if (rawJid.includes('@g.us') || rawJid.includes('@broadcast')) return;
+    const phone = rawJid.replace(/@s\.whatsapp\.net$/, '').replace(/@lid$/, '').replace(/@.*$/, '');
+    if (!phone || !/^\d+$/.test(phone)) return;
 
     let messageText = '';
     if (msg.message?.conversation) {
@@ -823,16 +826,17 @@ server.listen(config.bot.port, () => {
       `/${inst}/webhook`,
       `/webhook/set`,
     ];
+    const evoBaseUrl = config.evolution.url;
     let webhookSet = false;
     for (const path of webhookPaths) {
       try {
-        await axios.put(`${baseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
+        await axios.put(`${evoBaseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
         console.log(`[Evolution] Webhook set via PUT ${path}`);
         webhookSet = true;
         break;
       } catch {
         try {
-          await axios.post(`${baseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
+          await axios.post(`${evoBaseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
           console.log(`[Evolution] Webhook set via POST ${path}`);
           webhookSet = true;
           break;
@@ -845,72 +849,86 @@ server.listen(config.bot.port, () => {
   }, 10000);
 });
 
-// ─── Chat-based polling (uses GET /chat/findChats which works in v1.8.x) ─────
-// Tracks last-seen timestamp per JID to detect new incoming messages
-const _chatLastSeen = new Map();
-let _pollInitialized = false;
+// ─── Message polling via findMessages (works with @lid multi-device) ──────────
+// Polls /chat/findMessages every 3 s, only processing messages newer than boot
+let _lastPollTs = Math.floor(Date.now() / 1000); // Unix timestamp, seconds
+const _seenMsgIds = new Set();                    // de-dupe within this process run
 
-async function pollViaChats() {
+async function pollMessages() {
   try {
     const axios = require('axios');
+    // Evolution API v1.8.x stores and exposes messages via this endpoint
+    // Filter: inbound only (fromMe=false), newer than our last poll window
     const resp = await axios.get(
-      `${config.evolution.url}/chat/findChats/${config.evolution.instance}`,
-      { headers: { apikey: config.evolution.apiKey }, timeout: 8000 }
+      `${config.evolution.url}/chat/findMessages/${config.evolution.instance}`,
+      {
+        headers: { apikey: config.evolution.apiKey },
+        params: {
+          'where[key.fromMe]': false,
+          limit: 30,
+          offset: 0,
+        },
+        timeout: 8000,
+      }
     );
 
-    const chats = Array.isArray(resp.data) ? resp.data : [];
+    const msgs = Array.isArray(resp.data)
+      ? resp.data
+      : Array.isArray(resp.data?.messages)
+        ? resp.data.messages
+        : [];
 
-    for (const chat of chats) {
-      const jid = chat.id?._serialized || chat.id || '';
-      if (!jid || jid.includes('@g.us') || jid.includes('@broadcast')) continue;
+    for (const msg of msgs) {
+      const ts = msg.messageTimestamp || msg.t || 0;
+      if (ts <= _lastPollTs) continue; // older than our startup timestamp
 
-      // Get last message from this chat
-      const lastMsg = chat.lastMessage || chat.messages?.[chat.messages.length - 1];
-      if (!lastMsg) continue;
-
-      const fromMe = lastMsg.key?.fromMe ?? lastMsg.fromMe ?? false;
-      if (fromMe) continue;
-
-      const ts = lastMsg.messageTimestamp || lastMsg.t || lastMsg.timestamp || 0;
-      const lastSeen = _chatLastSeen.get(jid) || 0;
-
-      // On first poll, just record timestamps — don't process old messages
-      if (!_pollInitialized) {
-        _chatLastSeen.set(jid, ts);
-        continue;
+      const msgId = msg.key?.id || `${ts}`;
+      if (_seenMsgIds.has(msgId)) continue;
+      _seenMsgIds.add(msgId);
+      if (_seenMsgIds.size > 1000) {
+        // Prune to avoid unbounded growth
+        const iter = _seenMsgIds.values();
+        for (let i = 0; i < 200; i++) _seenMsgIds.delete(iter.next().value);
       }
 
-      if (ts <= lastSeen) continue;
-      _chatLastSeen.set(jid, ts);
+      // Skip group/broadcast
+      const rawJid = msg.key?.remoteJid || '';
+      if (rawJid.includes('@g.us') || rawJid.includes('@broadcast')) continue;
 
-      const phone = jid.replace('@s.whatsapp.net', '').replace('@lid', '');
-      if (!phone || phone.includes('@')) continue;
+      // Extract numeric phone from any JID format (@s.whatsapp.net or @lid)
+      const phone = rawJid.replace(/@s\.whatsapp\.net$/, '').replace(/@lid$/, '').replace(/@.*$/, '');
+      if (!phone || !/^\d+$/.test(phone)) continue;
 
       const text =
-        lastMsg.body ||
-        lastMsg.message?.conversation ||
-        lastMsg.message?.extendedTextMessage?.text ||
-        lastMsg.message?.buttonsResponseMessage?.selectedDisplayText ||
-        lastMsg.message?.listResponseMessage?.title || '';
+        msg.message?.conversation ||
+        msg.message?.extendedTextMessage?.text ||
+        msg.message?.buttonsResponseMessage?.selectedDisplayText ||
+        msg.message?.listResponseMessage?.title ||
+        msg.body || '';
 
       if (!text.trim()) continue;
 
-      console.log(`[Chat Poll] New message from ${phone}: "${text.trim().slice(0, 60)}"`);
+      console.log(`[Msg Poll] New msg ts=${ts} from ${phone}: "${text.trim().slice(0, 60)}"`);
       await routeMessage(phone, text.trim()).catch(console.error);
     }
 
-    if (!_pollInitialized) {
-      _pollInitialized = true;
-      console.log(`[Chat Poll] Initialized — tracking ${chats.length} chats`);
+    // Advance the watermark to avoid reprocessing on next poll
+    if (msgs.length > 0) {
+      const maxTs = Math.max(...msgs.map((m) => m.messageTimestamp || m.t || 0));
+      if (maxTs > _lastPollTs) _lastPollTs = maxTs;
     }
-  } catch { /* endpoint might not exist */ }
+  } catch (err) {
+    // Silently ignore — endpoint may not be available depending on EVO version/state
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[Msg Poll] Error:', err.message);
+    }
+  }
 }
 
-// Start polling 25 seconds after boot (let Evolution API connect first)
+// Start polling 30 seconds after boot (let Evolution API fully connect first)
 setTimeout(() => {
-  console.log('[Chat Poll] Starting chat-based message polling every 3 seconds...');
-  pollViaChats();
-  setInterval(pollViaChats, 3000);
-}, 25000);
+  console.log('[Msg Poll] Starting message polling every 3 s (fallback for @lid)...');
+  setInterval(pollMessages, 3000);
+}, 30000);
 
 module.exports = { app, server };
