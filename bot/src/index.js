@@ -892,6 +892,54 @@ async function pollEvolutionMessages() {
   } catch { /* endpoint might not exist in this version */ }
 }
 
+// ─── Evolution API WebSocket (with apikey in URL) ─────────────────────────────
+function startEvoWebSocket() {
+  let ws;
+  function connect() {
+    const wsBase = config.evolution.url
+      .replace('https://', 'wss://')
+      .replace('http://', 'ws://');
+    // Include apikey as query param — required for auth in some v1.8.x builds
+    const url = `${wsBase}/socket.io/?EIO=4&transport=websocket&apikey=${config.evolution.apiKey}`;
+    try {
+      const WebSocket = require('ws');
+      ws = new WebSocket(url);
+    } catch { return; }
+
+    ws.on('open', () => {
+      console.log('[Evolution WS] Connected');
+      ws.send('40');
+    });
+    ws.on('message', async (raw) => {
+      const str = raw.toString();
+      if (str === '2') { ws.send('3'); return; }
+      if (!str.startsWith('42')) return;
+      try {
+        const [event, payload] = JSON.parse(str.slice(2));
+        if (event !== 'messages.upsert') return;
+        if (payload?.instance !== config.evolution.instance) return;
+        const msg = payload?.data;
+        if (!msg || msg.key?.fromMe) return;
+        const remoteJid = msg.key?.remoteJid || '';
+        if (remoteJid.endsWith('@g.us')) return;
+        const phone = remoteJid.replace('@s.whatsapp.net', '').replace('@lid', '');
+        if (!phone || phone.includes('@')) return;
+        const text = msg.message?.conversation ||
+          msg.message?.extendedTextMessage?.text ||
+          msg.message?.buttonsResponseMessage?.selectedDisplayText ||
+          msg.message?.listResponseMessage?.title || '';
+        if (!text.trim()) return;
+        console.log(`[Evolution WS] Message from ${phone}: "${text.slice(0, 50)}"`);
+        await routeMessage(phone, text.trim());
+      } catch (err) { console.error('[Evolution WS]', err.message); }
+    });
+    ws.on('close', () => { setTimeout(connect, 5000); });
+    ws.on('error', () => { /* retry silently */ });
+  }
+  setTimeout(connect, 20000);
+}
+startEvoWebSocket();
+
 // Start polling after 20 seconds (let Evolution API fully start first)
 setTimeout(() => {
   console.log('[Poll] Starting message polling every 3 seconds...');
