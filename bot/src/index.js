@@ -786,7 +786,7 @@ server.listen(config.bot.port, () => {
     backupService.scheduleDailyBackup();
   }
 
-  // Auto-setup Evolution API instance after 10 seconds (wait for evo to start)
+  // Auto-setup Evolution API instance after 30 seconds (v2.x needs DB migration time)
   setTimeout(async () => {
     const axios = require('axios');
     const evoHeaders = { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' };
@@ -844,14 +844,14 @@ async function pollMessages() {
     const axios = require('axios');
     // Evolution API v1.8.x stores and exposes messages via this endpoint
     // Filter: inbound only (fromMe=false), newer than our last poll window
+    // v2.x uses /message/findMessages, v1.x used /chat/findMessages — try both
     const resp = await axios.get(
-      `${config.evolution.url}/chat/findMessages/${config.evolution.instance}`,
+      `${config.evolution.url}/message/findMessages/${config.evolution.instance}`,
       {
         headers: { apikey: config.evolution.apiKey },
         params: {
           'where[key.fromMe]': false,
           limit: 30,
-          offset: 0,
         },
         timeout: 8000,
       }
