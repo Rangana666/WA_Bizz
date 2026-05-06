@@ -812,39 +812,24 @@ server.listen(config.bot.port, () => {
       }
     }
 
-    // Always set webhook — try multiple endpoint patterns for different Evolution API versions
+    // Set per-instance webhook (v2.x path: PUT /webhook/set/{instance})
+    const evoBaseUrl = config.evolution.url;
+    const inst = config.evolution.instance;
     const webhookBody = {
       url: 'http://bot:4000/webhook',
       webhook_by_events: false,
       enabled: true,
       events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
     };
-    const inst = config.evolution.instance;
-    const webhookPaths = [
-      `/webhook/set/${inst}`,
-      `/${inst}/webhook/set`,
-      `/${inst}/webhook`,
-      `/webhook/set`,
-    ];
-    const evoBaseUrl = config.evolution.url;
-    let webhookSet = false;
-    for (const path of webhookPaths) {
-      try {
-        await axios.put(`${evoBaseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
-        console.log(`[Evolution] Webhook set via PUT ${path}`);
-        webhookSet = true;
-        break;
-      } catch {
-        try {
-          await axios.post(`${evoBaseUrl}${path}`, webhookBody, { headers: evoHeaders, timeout: 5000 });
-          console.log(`[Evolution] Webhook set via POST ${path}`);
-          webhookSet = true;
-          break;
-        } catch { /* try next */ }
-      }
-    }
-    if (!webhookSet) {
-      console.warn('[Evolution] Could not set webhook via API — relying on WEBHOOK_GLOBAL_ENABLED env var');
+    try {
+      await axios.put(
+        `${evoBaseUrl}/webhook/set/${inst}`,
+        webhookBody,
+        { headers: evoHeaders, timeout: 5000 }
+      );
+      console.log('[Evolution] Webhook configured via API');
+    } catch {
+      console.log('[Evolution] Per-instance webhook not set — global webhook active via env var');
     }
   }, 10000);
 });
