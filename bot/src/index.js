@@ -703,39 +703,47 @@ app.get('/api/whatsapp/qr', authMiddleware, async (req, res) => {
   const baseUrl = config.evolution.url;
   const instance = config.evolution.instance;
 
-  try {
-    // Step 1: try the connect endpoint (works if instance already has QR)
-    const connectResp = await axios.get(
-      `${baseUrl}/instance/connect/${instance}`,
-      { headers, timeout: 10000 }
-    );
-    const connectData = connectResp.data;
-    const base64FromConnect = connectData?.base64 ||
-      connectData?.qrcode?.base64 || null;
+  function extractBase64(data) {
+    return data?.base64 || data?.qrcode?.base64 || null;
+  }
 
-    if (base64FromConnect && connectData?.count > 0) {
-      return res.json({ base64: base64FromConnect });
+  try {
+    // Try connect up to 6 times with 3-second gaps (v2.x generates QR asynchronously)
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const connectResp = await axios.get(
+        `${baseUrl}/instance/connect/${instance}`,
+        { headers, timeout: 15000 }
+      ).catch(() => null);
+
+      const data = connectResp?.data;
+      const base64 = extractBase64(data);
+      if (base64) return res.json({ base64 });
+
+      if (attempt < 5) await new Promise((r) => setTimeout(r, 3000));
     }
 
-    // Step 2: connect returned count:0 — delete and recreate with qrcode:true
-    await axios.delete(
-      `${baseUrl}/instance/${instance}/deleteInstance`,
-      { headers, timeout: 5000 }
-    ).catch(() => {});
-
+    // All retries exhausted — delete (v2.x path) and recreate
+    await axios.delete(`${baseUrl}/instance/${instance}`, { headers, timeout: 5000 }).catch(() => {});
     await new Promise((r) => setTimeout(r, 2000));
 
     const createResp = await axios.post(
       `${baseUrl}/instance/create`,
       { instanceName: instance, qrcode: true, integration: 'WHATSAPP-BAILEYS' },
       { headers, timeout: 15000 }
-    );
+    ).catch(() => null);
 
-    const base64FromCreate = createResp.data?.qrcode?.base64 || null;
+    const base64FromCreate = extractBase64(createResp?.data);
+    if (base64FromCreate) return res.json({ base64: base64FromCreate });
 
-    if (base64FromCreate) {
-      return res.json({ base64: base64FromCreate });
-    }
+    // Wait 15 seconds after create then try connect once more
+    await new Promise((r) => setTimeout(r, 15000));
+    const finalResp = await axios.get(
+      `${baseUrl}/instance/connect/${instance}`,
+      { headers, timeout: 15000 }
+    ).catch(() => null);
+
+    const finalBase64 = extractBase64(finalResp?.data);
+    if (finalBase64) return res.json({ base64: finalBase64 });
 
     res.status(503).json({ error: 'QR code not ready yet — try again in 5 seconds' });
   } catch (err) {
