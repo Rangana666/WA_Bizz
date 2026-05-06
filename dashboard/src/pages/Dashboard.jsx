@@ -241,7 +241,8 @@ export default function Dashboard() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <StatsCard label="Messages today" value={stats.messagesToday ?? 0} />
           <StatsCard label="Today's orders" value={stats.totalOrders} />
           <StatsCard label="Revenue today" value={`Rs ${(stats.totalRevenue / 100).toFixed(0)}`} />
           <StatsCard label="Delivered" value={stats.delivered} />

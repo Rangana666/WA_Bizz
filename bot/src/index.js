@@ -94,6 +94,10 @@ app.post('/webhook', async (req, res) => {
     messageText = messageText.trim();
     if (!messageText) return;
 
+    // Log inbound message for stats
+    const customer = await customerDb.findOrCreate(phone);
+    await customerDb.logMessage(customer.id, 'inbound', 'text', messageText).catch(() => {});
+
     await routeMessage(phone, messageText);
   } catch (err) {
     console.error('[Webhook] Error processing message:', err.message);
@@ -136,12 +140,19 @@ app.post('/api/auth/login', async (req, res) => {
 
 // ─── Dashboard stats ──────────────────────────────────────────────────────────
 app.get('/api/dashboard/stats', authMiddleware, async (req, res) => {
-  const stats = await orderDb.getTodayStats();
+  const [stats, msgResult] = await Promise.all([
+    orderDb.getTodayStats(),
+    require('./db/postgres').query(
+      `SELECT COUNT(*) AS count FROM conversation_logs
+       WHERE direction = 'inbound' AND DATE(created_at) = CURRENT_DATE`
+    ),
+  ]);
   res.json({
     totalOrders: parseInt(stats.total_orders),
     totalRevenue: parseInt(stats.total_revenue),
     delivered: parseInt(stats.delivered),
     pending: parseInt(stats.pending),
+    messagesToday: parseInt(msgResult.rows[0]?.count || 0),
   });
 });
 
@@ -774,14 +785,22 @@ server.listen(config.bot.port, () => {
         const axios = require('axios');
         await axios.post(
           `${config.evolution.url}/instance/create`,
-          {
-            instanceName: config.evolution.instance,
-            qrcode: true,
-            integration: 'WHATSAPP-BAILEYS',
-          },
+          { instanceName: config.evolution.instance, qrcode: true },
           { headers: { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' }, timeout: 10000 }
         );
         console.log(`[Evolution] Instance "${config.evolution.instance}" created`);
+
+        // Set webhook for this instance
+        await axios.put(
+          `${config.evolution.url}/webhook/set/${config.evolution.instance}`,
+          {
+            url: `http://bot:4000/webhook`,
+            webhook_by_events: false,
+            events: ['MESSAGES_UPSERT', 'MESSAGES_UPDATE', 'CONNECTION_UPDATE', 'QRCODE_UPDATED'],
+          },
+          { headers: { apikey: config.evolution.apiKey, 'Content-Type': 'application/json' }, timeout: 5000 }
+        ).catch((e) => console.warn('[Evolution] Webhook set failed:', e.message));
+        console.log(`[Evolution] Webhook configured for "${config.evolution.instance}"`);
       } catch (err) {
         console.warn(`[Evolution] Could not create instance: ${err.message}`);
       }
